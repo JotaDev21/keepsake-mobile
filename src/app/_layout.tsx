@@ -16,6 +16,8 @@ import { registerRemoteNotifications, syncReminders } from '@/lib/notifications'
 import { prefs } from '@/lib/prefs';
 import { useAchievementStore } from '@/stores/useAchievementStore';
 import { useCareStore } from '@/stores/useCareStore';
+import { useActivityStore } from '@/stores/useActivityStore';
+import { refreshBilheteWidget, saveWidgetPreference, widgetPreference } from '@/widgets/bilhete-widget';
 import { useGardenStore } from '@/stores/useGardenStore';
 import { usePersonStore } from '@/stores/usePersonStore';
 import { useSyncStore } from '@/stores/useSyncStore';
@@ -124,6 +126,25 @@ function ThemedNavigator() {
 
   // A tapped notification lands on its ritual — both warm (app open) and cold starts.
   useEffect(() => {
+    void useActivityStore.getState().connect(coupleId, uid);
+    const pref = widgetPreference();
+    // uid starts null while the protected session hydrates on cold launch.
+    // Hide previews for an actual identity change, not during that bootstrap.
+    if (uid && pref.enabled && (pref.uid !== uid || pref.coupleId !== coupleId)) {
+      saveWidgetPreference({ ...pref, enabled: false, uid, coupleId });
+      void refreshBilheteWidget().catch(() => {});
+    } else if (uid && pref.enabled && pref.accent !== theme.colors.accent) {
+      saveWidgetPreference({ ...pref, accent: theme.colors.accent });
+      void refreshBilheteWidget().catch(() => {});
+    }
+  }, [coupleId, uid, theme.colors.accent]);
+
+  useEffect(() => useActivityStore.subscribe((state, previous) => {
+    if (state.events !== previous.events && !state.syncing) void refreshBilheteWidget().catch(() => {});
+    if (previous.syncing && !state.syncing) void refreshBilheteWidget().catch(() => {});
+  }), []);
+
+  useEffect(() => {
     Notifications.getLastNotificationResponseAsync().then((r) => pushNotificationUrl(router, r));
     const sub = Notifications.addNotificationResponseReceivedListener((r) => pushNotificationUrl(router, r));
     return () => sub.remove();
@@ -168,6 +189,8 @@ function ThemedNavigator() {
         const sync = useSyncStore.getState();
         useAchievementStore.getState().connect(sync.coupleId, sync.uid).catch(() => {});
         useCareStore.getState().connect(sync.coupleId, sync.uid, sync.partnerId).catch(() => {});
+        void useActivityStore.getState().connect(sync.coupleId, sync.uid);
+        void refreshBilheteWidget().catch(() => {});
         registerRemoteNotifications().catch(() => {});
         const pid = usePersonStore.getState().person?.id;
         // Watering on every return makes "just showing up" count even when the
@@ -207,6 +230,10 @@ function ThemedNavigator() {
             <Stack.Screen name="conexao" options={{ animation: 'slide_from_bottom' }} />
             <Stack.Screen name="meu-perfil" options={{ animation: 'slide_from_bottom' }} />
             <Stack.Screen name="musica" options={{ animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="ainda-vamos-viver" />
+            <Stack.Screen name="bilhetes" />
+            <Stack.Screen name="desenhos" />
+            <Stack.Screen name="atividade/[id]" />
           </Stack.Protected>
           <Stack.Protected guard={!hasPerson}>
             <Stack.Screen name="onboarding" />

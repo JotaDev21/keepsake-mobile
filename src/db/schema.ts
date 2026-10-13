@@ -3,9 +3,23 @@
  * MIGRATIONS for every change; migrations run in order from the DB's current
  * user_version. Never edit a past migration — add a new one.
  */
-export const SCHEMA_VERSION = 8;
+export const SCHEMA_VERSION = 9;
 
 export const MIGRATIONS: Record<number, string> = {
+  9: `
+    CREATE TABLE IF NOT EXISTS couple_activity (
+      id TEXT NOT NULL,
+      couple_id TEXT NOT NULL,
+      owner_id TEXT NOT NULL,
+      body TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      status TEXT NOT NULL,
+      error TEXT,
+      PRIMARY KEY (id, owner_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_activity_scope ON couple_activity(couple_id, owner_id, created_at);
+    CREATE TABLE IF NOT EXISTS activity_draft (key TEXT PRIMARY KEY NOT NULL, body TEXT NOT NULL);
+  `,
   1: `
     CREATE TABLE IF NOT EXISTS person (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

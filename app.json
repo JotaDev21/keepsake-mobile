@@ -2,7 +2,7 @@
   "expo": {
     "name": "memory ev",
     "slug": "memory-ev",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "ev",
@@ -15,7 +15,7 @@
     },
     "android": {
       "package": "com.ev.app",
-      "versionCode": 2,
+      "versionCode": 3,
       "allowBackup": false,
       "adaptiveIcon": {
         "backgroundColor": "#110E0C",
@@ -70,7 +70,23 @@
           "defaultChannel": "sinais"
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [{
+            "name": "Bilhete",
+            "label": "memory ev · bilhete",
+            "description": "Um carinho do seu amor na tela inicial. Prévia opcional no app.",
+            "minWidth": "250dp",
+            "minHeight": "110dp",
+            "targetCellWidth": 4,
+            "targetCellHeight": 2,
+            "updatePeriodMillis": 1800000,
+            "resizeMode": "horizontal|vertical"
+          }]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

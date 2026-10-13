@@ -7,6 +7,7 @@ import { enterRise } from '@/animations';
 import { Icon, MemberAvatar, PressableScale, PulseCard, Screen, SunflowerMark, Text } from '@/components';
 import { HomeMemory } from '@/components/home/HomeMemory';
 import { HomeShortcut } from '@/components/home/HomeShortcut';
+import { HomeActivities } from '@/components/home/home-activities';
 import { radius, spacing, useTheme } from '@/design';
 import { countdownLabel, dayAgeLabel, daysUntil, momentAgeLabel, presenceLabel } from '@/lib/dates';
 import { formatLongDate, greetingForHour } from '@/lib/format';
@@ -143,6 +144,8 @@ export default function HojeScreen() {
         <HomeShortcut icon="edit-3" label="Escrever" hint="uma carta" onPress={() => router.push('/cartas/escrever')} />
         <HomeShortcut icon="headphones" label="Ouvir" hint="nossa trilha" onPress={() => router.push('/musica')} />
       </Animated.View>
+
+      <HomeActivities />
 
       {nudgeFresh ? (
         <View style={[styles.note, { backgroundColor: theme.colors.accentSoft }]}>
