@@ -34,24 +34,24 @@ export function DrawingPad({ value, onChange }: { value: Drawing; onChange?: (va
   };
   const gesture = Gesture.Pan().minDistance(0).enabled(Boolean(onChange) && value.length < 80 && points < 5400)
     .onBegin((e) => {
-      active.value = [{ x: Math.max(0, Math.min(1, e.x / width.value)), y: Math.max(0, Math.min(1, e.y / DRAWING_SIZE)) }];
-      activePath.value = drawingPath([active.value], width.value, DRAWING_SIZE);
+      active.value = [{ x: Math.max(0, Math.min(1, e.x / width.value)), y: Math.max(0, Math.min(1, e.y / width.value)) }];
+      activePath.value = drawingPath([active.value], width.value, width.value);
     }).onUpdate((e) => {
-      const point = { x: Math.max(0, Math.min(1, e.x / width.value)), y: Math.max(0, Math.min(1, e.y / DRAWING_SIZE)) };
+      const point = { x: Math.max(0, Math.min(1, e.x / width.value)), y: Math.max(0, Math.min(1, e.y / width.value)) };
       const previous = active.value[active.value.length - 1];
       if (active.value.length >= 600 || (previous && Math.abs(point.x - previous.x) + Math.abs(point.y - previous.y) < 0.003)) return;
       active.value = [...active.value, point];
-      activePath.value = drawingPath([active.value], width.value, DRAWING_SIZE);
+      activePath.value = drawingPath([active.value], width.value, width.value);
     }).onEnd(() => { scheduleOnRN(commit, active.value); })
     .onFinalize(() => { active.value = []; activePath.value = Skia.PathBuilder.Make().build(); });
   // Normalized coordinates keep a drawing intact on different screen sizes.
-  const path = useMemo(() => drawingPath(value, layoutWidth, DRAWING_SIZE), [value, layoutWidth]);
+  const path = useMemo(() => drawingPath(value, layoutWidth, layoutWidth), [value, layoutWidth]);
   return (
     <View style={{ gap: spacing.sm }}>
       <GestureDetector gesture={gesture}>
         <View accessibilityLabel={onChange ? 'Área para desenhar com o dedo' : 'Desenho enviado'}
           onLayout={(e) => { width.value = e.nativeEvent.layout.width; setLayoutWidth(e.nativeEvent.layout.width); }}
-          style={{ height: DRAWING_SIZE, borderRadius: radius.lg, overflow: 'hidden', backgroundColor: theme.colors.backgroundDeep,
+          style={{ aspectRatio: 1, borderRadius: radius.lg, overflow: 'hidden', backgroundColor: theme.colors.backgroundDeep,
             borderColor: theme.colors.borderStrong, borderWidth: StyleSheet.hairlineWidth }}>
           <Canvas style={{ flex: 1 }}>
             <Path path={path} color={theme.colors.accent} style="stroke"

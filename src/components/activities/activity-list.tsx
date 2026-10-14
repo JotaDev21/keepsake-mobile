@@ -115,7 +115,7 @@ export function ActivityList({ type }: { type: Activity['type'] }) {
           <Text variant="overline" color="accent">{item.authorId === uid ? 'Você' : 'Seu amor'}{item.type === 'wish' && item.done ? ' · vivido' : ''}</Text>
           <Text variant="title2" numberOfLines={3}>{item.type === 'game' ? item.answer ? `Era ${item.answer}` : item.replies.length ? 'Tem palpite esperando por você' : 'O que esse desenho conta?'
             : item.payload.text || (item.payload.drawing ? 'Um carinho desenhado' : 'Um instante para você')}</Text>
-          <Text variant="caption" color="textMuted">{item.failed ? 'Envio precisa de atenção' : item.pending ? 'Salvo aqui · envio pendente' : item.type === 'note' ? item.openedBy.length ? 'Aberto no app' : 'Enviado · abrir bilhete' : 'Abrir nossa história'}</Text>
+          <Text variant="caption" color="textMuted">{item.failed ? 'Envio precisa de atenção' : item.pending ? 'Salvo aqui · envio pendente' : item.type === 'note' ? item.openedBy.length ? 'Leitura confirmada' : 'Enviado · abrir bilhete' : 'Abrir nossa história'}</Text>
         </Card>} />
       <BackButton />
     </KeyboardAvoidingView>

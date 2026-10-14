@@ -90,7 +90,12 @@ export default function ActivityDetail() {
         <Text variant="caption" color="textMuted">{item.failed ? 'Um envio precisa de atenção.' : item.pending ? 'Salvo neste aparelho · esperando conexão' : 'Sincronizado entre vocês'}</Text>
         {error ? <Text variant="caption" color="textSecondary">{error}</Text> : null}
         {item.failed ? <><Text variant="caption" color="accent">{events.find((e) => e.entityId === id && e.status === 'failed')?.error}</Text>
-          <Button label="Tentar enviar de novo" variant="secondary" onPress={() => { void useActivityStore.getState().retry(); }} /></> : null}
+          <Button label="Tentar enviar de novo" variant="secondary" onPress={() => { void useActivityStore.getState().retry(); }} />
+          {events.filter((e) => e.entityId === id && e.status === 'failed' && e.id !== e.entityId && e.authorId === uid).map((entry) =>
+            <Button key={entry.id} label="Descartar tentativa que falhou" variant="ghost" onPress={() => Alert.alert('Descartar esta tentativa?', 'O conteúdo desta tentativa não enviada será removido deste aparelho.', [
+              { text: 'Manter', style: 'cancel' }, { text: 'Descartar', style: 'destructive', onPress: () => { void useActivityStore.getState().discardFailedReply(entry.id).catch(() => Alert.alert('Tente novamente', 'Não consegui remover esta tentativa agora.')); } },
+            ])} />)}
+        </> : null}
         {item.type !== 'wish' && item.payload.text ? <Text variant="serif" selectable>{item.payload.text}</Text> : null}
         {item.payload.drawing ? <DrawingPad value={item.payload.drawing} /> : null}
         <ActivityPhoto payload={item.memory ?? item.payload} />
@@ -111,7 +116,7 @@ export default function ActivityDetail() {
             : <Button label="Compartilhar foto da lembrança" icon="camera" loading={busy} onPress={() => { void addPhoto(); }} />}
         </Card> : null}
         {item.type === 'note' && !own && !item.openedBy.includes(uid ?? '') ? <Button label="Dizer que li seu bilhete" disabled={busy} onPress={() => { void action('note.open'); }} /> : null}
-        {item.type === 'note' ? <Text variant="caption" color="textSecondary">{item.openedBy.length ? 'Leitura confirmada pelo seu amor.' : 'A leitura é confirmada por quem recebe o bilhete.'}</Text> : null}
+        {item.type === 'note' ? <Text variant="caption" color="textSecondary">{item.openedBy.length ? own ? 'Seu amor confirmou a leitura.' : 'Você confirmou a leitura.' : 'A leitura é confirmada por quem recebe o bilhete.'}</Text> : null}
         {item.type === 'game' && item.answer ? <Card featured style={{ gap: spacing.md }}>
           <Text variant="overline" color="accent">Resposta revelada</Text><Text variant="display">{item.answer}</Text>
           <Button label="Guardar esta brincadeira" loading={busy} onPress={() => { void keep(); }} />

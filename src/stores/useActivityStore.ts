@@ -29,6 +29,7 @@ interface ActivityState {
   sync: () => Promise<void>;
   send: (kind: ActivityKind, payload: ActivityPayload, entityId?: string, id?: string) => Promise<string>;
   retry: (id?: string) => Promise<void>;
+  discardFailedReply: (id: string) => Promise<void>;
 }
 let channel: RealtimeChannel | null = null;
 let generation = 0;
@@ -89,6 +90,13 @@ export const useActivityStore = create<ActivityState>((set, get) => ({
       set({ events: get().events.map((e) => e.id === next.id ? next : e) });
     }
     await get().sync();
+  },
+  discardFailedReply: async (id) => {
+    const { uid } = get();
+    const event = get().events.find((e) => e.id === id);
+    if (!uid || !event || event.status !== 'failed' || event.authorId !== uid || event.id === event.entityId) return;
+    await activityRepo.remove(uid, id);
+    set({ events: get().events.filter((e) => e.id !== id) });
   },
   sync: async () => {
     if (running) { refreshRequested = true; await running; return; }
@@ -153,14 +161,21 @@ export const useActivityStore = create<ActivityState>((set, get) => ({
             .gt('sequence', after).order('sequence').limit(200);
           if (response.error) throw response.error;
           const rows = response.data as RemoteEvent[];
+          const cachedById = new Map(get().events.map((event) => [event.id, event]));
+          const page: ActivityEvent[] = [];
           for (const row of rows) {
             const event = fromRemoteActivity(row);
-            const local = get().events.find((e) => e.id === event.id);
+            const local = cachedById.get(event.id);
             if (local?.payload.localFile) event.payload.localFile = local.payload.localFile;
             await activityRepo.save(uid, event);
             if (!isCurrent()) return;
-            set({ events: [...get().events.filter((e) => e.id !== event.id), event] });
+            page.push(event);
           }
+          // Preserve new offline sends made during this fetch and publish one
+          // state update per page instead of rerendering the whole history per row.
+          const merged = new Map(get().events.map((event) => [event.id, event]));
+          for (const event of page) merged.set(event.id, event);
+          if (page.length && isCurrent()) set({ events: [...merged.values()] });
           if (rows.length < 200) break;
           after = rows[rows.length - 1].sequence;
         }

@@ -20,8 +20,19 @@ export function saveWidgetPreference(value: WidgetPreference) { Storage.setItemS
 
 function drawingSvg(payload: ActivityPayload, accent: string): string {
   const size = spacing.huge * 4;
-  const paths = (payload.drawing ?? []).map((stroke) => `<path d="${stroke.map((p, i) => `${i ? 'L' : 'M'}${(p.x * size).toFixed(2)},${(p.y * size).toFixed(2)}`).join(' ')}"/>`).join('');
+  const paths = (payload.drawing ?? []).map((stroke) => {
+    const line = stroke.map((p, i) => `${i ? 'L' : 'M'}${(p.x * size).toFixed(2)},${(p.y * size).toFixed(2)}`).join(' ');
+    const dot = stroke.length === 1 ? ` L${(stroke[0].x * size + 0.1).toFixed(2)},${(stroke[0].y * size + 0.1).toFixed(2)}` : '';
+    return `<path d="${line}${dot}"/>`;
+  }).join('');
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}"><g fill="none" stroke="${accent}" stroke-width="${spacing.xs}" stroke-linecap="round" stroke-linejoin="round">${paths}</g></svg>`;
+}
+
+async function widgetRequest<T>(request: (signal: AbortSignal) => PromiseLike<T>): Promise<T> {
+  // RN 0.85 ships abort-controller, whose AbortSignal has no static timeout().
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try { return await request(controller.signal); } finally { clearTimeout(timeout); }
 }
 
 async function widgetContent(refresh: boolean) {
@@ -31,13 +42,14 @@ async function widgetContent(refresh: boolean) {
   // an old couple must never make a previous partner's note visible.
   const { data } = await supabase.auth.getSession();
   if (data.session?.user.id !== pref.uid) return null;
-  const membership = await supabase.from('members').select('couple_id').eq('id', pref.uid).abortSignal(AbortSignal.timeout(8000)).maybeSingle();
+  const client = supabase;
+  const membership = await widgetRequest((signal) => client.from('members').select('couple_id').eq('id', pref.uid).abortSignal(signal).maybeSingle());
   if (!membership.error && membership.data?.couple_id !== pref.coupleId) return null;
   const key = `widget-note:${pref.coupleId}:${pref.uid}`;
   let note = await activityRepo.getDraft<ActivityEvent>(key);
-  if (refresh) {
-    const response = await supabase.from('couple_activity_events').select('*').eq('couple_id', pref.coupleId)
-      .eq('kind', 'note.send').neq('author_id', pref.uid).order('sequence', { ascending: false }).limit(1).abortSignal(AbortSignal.timeout(8000));
+  if (refresh && !membership.error) {
+    const response = await widgetRequest((signal) => client.from('couple_activity_events').select('*').eq('couple_id', pref.coupleId!)
+      .eq('kind', 'note.send').neq('author_id', pref.uid!).order('sequence', { ascending: false }).limit(1).abortSignal(signal));
     if (!response.error) {
       note = response.data[0] ? fromRemoteActivity(response.data[0]) : null;
       await activityRepo.setDraft(key, note);

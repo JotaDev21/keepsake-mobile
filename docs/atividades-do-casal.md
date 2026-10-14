@@ -47,4 +47,10 @@ O teste SQLite abre uma base na versão 8 com foto, humor e carta existentes, ap
 
 O SQL novo foi aplicado no projeto configurado do app, com histórico de migração e publicação Realtime. Um teste de gravação autenticada no servidor foi executado dentro de uma transação revertida, sem deixar conteúdo de teste no casal. A função de avisos foi publicada e a rejeição de chamadas sem autenticação foi conferida.
 
+O APK Android foi compilado e instalado no aparelho do usuário com pacote `com.ev.app`, versão 1.2.0/código 3 e a mesma assinatura da versão anterior. A abertura da rota Bilhetes foi conferida no aparelho; o conteúdo ficou oculto no widget por padrão. Os mapas do pacote compilado confirmaram as correções de proporção do desenho, importação privada para o cofre e compatibilidade do tempo limite de rede com RN 0.85.
+
+O usuário pediu para deixar os testes de toque, rascunho, teclado e desenho no celular para depois porque estava usando o aparelho. Essas verificações não foram concluídas. Não foram enviados bilhetes, desejos ou palpites de teste para o outro perfil.
+
 O usuário dispõe de um aparelho. A troca real com dois aparelhos, push no destinatário e o comportamento do widget durante suspensão prolongada precisam de validação conjunta posterior. Esta limitação não equivale aos testes de acesso no banco, que foram executados.
+
+Para publicar a função de avisos, use `supabase functions deploy activities --project-ref SEU_PROJECT_REF --use-api --no-verify-jwt`. A função verifica o token com `auth.getUser()` antes de consultar a atividade; a verificação de JWT no gateway fica desligada para permitir os tokens atuais do Supabase Auth.
