@@ -1,8 +1,8 @@
-# Keepsake
+# Keepsake Mobile
 
 App de memórias para guardar fotos, cartas, registros de humor e atividades. Os registros locais usam SQLite. O pareamento entre dois aparelhos e os recursos de IA têm configuração própria.
 
-## O que dá para explorar
+## Funcionalidades
 
 - Cofre de fotos, linha do tempo e cartas.
 - Diário de humor e lista de atividades.
